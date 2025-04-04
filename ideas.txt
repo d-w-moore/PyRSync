@@ -1,0 +1,29 @@
+also see gist: https://gist.github.com/d-w-moore/1160ddb5110b3c2bd56e58f635318ef8
+
+source get dest version checksums, make diff based on dest per-block checksums
+send diff plus SHA of source copy
+
+(if mthread, have several source starting points, one per thread)
+
+dest applies diffs(*), computes own instance of SHA and checks against source
+dest receives and writes source per-block computed checksums(++)
+
+(IDEA:
+src->dest rolling checksum per block
+dest->src SHA checksum per block (++)
+)
+
+---save bytes
+dest process to apply : receive diff (contents part of diff can be via objects in btree)
+'same' part offsets can be via xmlrpc
+
+wrapping writer class compute block SHA chksums on dest side
+
+
+dot-files in catalog, or metadata, can be used to hold block checksum data
+(ensure when walking as a source, to skip copying these.)
+
+
+dot-files on dest
+-----------------
+keep away from
