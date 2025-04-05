@@ -15,6 +15,7 @@ if '-i' in optD:
   sys_stdin = open(optD['-i'],'r')
 else:
   sys_stdin = sys.stdin
+#dwm
 
 p = print if (i&1) else lambda *p,**kw:None
 
@@ -52,7 +53,7 @@ print('elapsed =',t.elapsed)
 #lib.dummy_fill( out)
 #print([hex(_) for _ in out])
 
-rucs = lib.update_weakchecksum
+rucs = lib.repeat_update_weakchecksum
 rucs.restype = ctypes.c_long
 byte_ptr_type=ctypes.POINTER(ctypes.c_uint8)
 long_ptr_type=ctypes.POINTER(ctypes.c_long)
@@ -80,21 +81,26 @@ if i&2:
         ctypes.POINTER(ctypes.c_long),  # b
   ]
   I = ctypes.c_int(0)
-  from ctypes import(c_long,POINTER,sizeof,byref,cast)
+  from ctypes import(c_uint8,c_long,POINTER,sizeof,byref,cast)
   if i&32:
-    while True:
-      readbuf = sys_stdin.buffer.read(len(buf))
-      lnb=len(newbuf)
-      if lnb == 0: break
-      newbuf  = (c_uint8*lnb)(readbuf)
-      outsums = (c_long*lnb)()
-# DWM h.sumchar((c_uint8*5)(*(_ for _ in b'\0\1\2\3\4')),5)
-      rucs(
-        (ctypes.c_char * len(buf)).from_buffer(buf), len(buf), ctypes.pointer(I),     # buf,blocksize,offs
-        newbuf, len(newbuf), cast(byref(outsums),long_ptr_type), # newbuf,nnew,outbuf
-        cast(byref(out,sizeof(c_long)),POINTER(c_long)),   #a
-        cast(byref(out,2*sizeof(c_long)),POINTER(c_long))  #b
-      )
+    L=0
+    with wcs.timer() as timer:
+        while True:
+          newbuf = sys_stdin.buffer.read(len(buf)*4);
+          lnb=len(newbuf)
+          newbuf = (c_uint8*lnb)(*(_ for _ in newbuf))
+          if lnb == 0: break
+          L+=lnb
+          #print(f'step {L = }',file=sys.stderr)
+          outsums = (c_long*lnb)()
+          rucs(
+            (ctypes.c_char * len(buf)).from_buffer(buf), len(buf), ctypes.pointer(I),     # buf,blocksize,offs
+            newbuf, lnb, cast(byref(outsums),long_ptr_type), # newbuf,nnew,outbuf
+            cast(byref(out,sizeof(c_long)),POINTER(c_long)),   #a
+            cast(byref(out,2*sizeof(c_long)),POINTER(c_long))  #b
+          )
+    print(f'{L = }{timer.elapsed = }')
+    exit()
   if i&64:
    for x in range(4096):
      l = ucs( 
@@ -105,5 +111,3 @@ if i&2:
      )
      out[0] = l
   print('after->',[(_) for _ in out])
-with wcs.timer() as t:
-  pass
